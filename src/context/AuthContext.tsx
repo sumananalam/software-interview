@@ -27,7 +27,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const res = await fetch('/api/auth/me', {
           headers: { Authorization: `Bearer ${token}` }
         });
-        if (res.ok) {
+        
+        const contentType = res.headers.get('content-type');
+        if (res.ok && contentType && contentType.includes('application/json')) {
           const data = await res.json();
           setUser(data.user);
         } else {
@@ -36,7 +38,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(null);
         }
       } catch (err) {
-        console.error('Failed to authenticate session', err);
+        console.warn('Failed to authenticate session, clearing token:', err);
+        localStorage.removeItem('interviewmate_token');
+        setToken(null);
+        setUser(null);
       } finally {
         setLoading(false);
       }

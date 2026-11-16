@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Brain, Lock, Mail, ArrowRight, AlertCircle, Sparkles } from 'lucide-react';
+import { Brain, Lock, Mail, ArrowRight, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface LoginPageProps {
@@ -25,41 +25,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({ setActivePage }) => {
         body: JSON.stringify({ email, password })
       });
       
-      let data = {};
-      try {
-        data = await res.json();
-      } catch (err) {}
-
+      const data = await res.json();
       if (!res.ok) {
-        throw new Error((data as any)?.error || 'Invalid email or password');
+        throw new Error(data.error || 'Invalid email or password');
       }
-      login((data as any).token, (data as any).user);
+
+      login(data.token, data.user);
       setActivePage('dashboard');
     } catch (err: any) {
-      console.warn('Backend login failed, using robust fallback session:', err);
-      // Fallback session so user is never blocked
-      const fallbackUser = {
-        id: 1,
-        name: email ? email.split('@')[0] : 'Candidate',
-        email: email || 'user@example.com',
-        preferred_job_role: 'Java Developer'
-      };
-      login('fallback_token_' + Date.now(), fallbackUser);
-      setActivePage('dashboard');
+      setError(err.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleDemoLogin = () => {
-    const demoUser = {
-      id: 1,
-      name: 'Demo Candidate',
-      email: 'demo@interviewmate.com',
-      preferred_job_role: 'Java Developer'
-    };
-    login('demo_token_123', demoUser);
-    setActivePage('dashboard');
   };
 
   return (
@@ -71,8 +48,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ setActivePage }) => {
               <Brain className="w-6 h-6 text-indigo-400" />
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">Welcome Back</h2>
-          <p className="text-xs text-slate-400">Sign in to continue your interview preparation</p>
+          <h2 className="text-2xl font-bold text-white tracking-tight">Sign In (Backend Auth)</h2>
+          <p className="text-xs text-slate-400">Authenticate with backend database & JWT</p>
         </div>
 
         {error && (
@@ -118,22 +95,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ setActivePage }) => {
             disabled={loading}
             className="w-full flex items-center justify-center gap-2 py-3.5 text-sm font-semibold text-white bg-gradient-to-r from-violet-600 to-indigo-600 rounded-xl hover:from-violet-500 hover:to-indigo-500 shadow-lg shadow-indigo-500/25 transition-all disabled:opacity-50"
           >
-            {loading ? 'Signing in...' : 'Sign In'} <ArrowRight className="w-4 h-4" />
+            {loading ? 'Authenticating with Backend...' : 'Sign In'} <ArrowRight className="w-4 h-4" />
           </button>
         </form>
-
-        <div className="relative flex py-2 items-center">
-          <div className="flex-grow border-t border-slate-800"></div>
-          <span className="flex-shrink mx-4 text-slate-505 text-xs text-slate-500">or</span>
-          <div className="flex-grow border-t border-slate-800"></div>
-        </div>
-
-        <button 
-          onClick={handleDemoLogin}
-          className="w-full flex items-center justify-center gap-2 py-3 text-xs font-semibold text-indigo-300 bg-indigo-600/10 border border-indigo-500/30 rounded-xl hover:bg-indigo-600/20 transition-all"
-        >
-          <Sparkles className="w-4 h-4 text-indigo-400" /> Quick Demo Login (Instant Access)
-        </button>
 
         <div className="text-center text-xs text-slate-400">
           Don't have an account?{' '}

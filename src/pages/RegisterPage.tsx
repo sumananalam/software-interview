@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Brain, Lock, Mail, User as UserIcon, ArrowRight, AlertCircle, Briefcase, Sparkles } from 'lucide-react';
+import { Brain, Lock, Mail, User as UserIcon, ArrowRight, AlertCircle, Briefcase } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface RegisterPageProps {
@@ -27,45 +27,18 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ setActivePage }) => 
         body: JSON.stringify({ name, email, password, preferred_job_role: preferredRole })
       });
       
-      let data = {};
-      try {
-        data = await res.json();
-      } catch (parseErr) {
-        // If response is not JSON (e.g. HTML 500 error page)
-      }
-
+      const data = await res.json();
       if (!res.ok) {
-        const errorMsg = (data as any)?.error || `Registration failed (Status ${res.status})`;
-        throw new Error(errorMsg);
+        throw new Error(data.error || 'Registration failed');
       }
 
-      login((data as any).token || 'mock_jwt_token', (data as any).user || { id: Date.now(), name, email, preferred_job_role: preferredRole });
+      login(data.token, data.user);
       setActivePage('dashboard');
     } catch (err: any) {
-      console.warn('Backend registration failed, using robust fallback session:', err);
-      // Fallback local session so user is never blocked
-      const fallbackUser = {
-        id: Date.now(),
-        name: name || 'Candidate',
-        email: email || 'user@example.com',
-        preferred_job_role: preferredRole
-      };
-      login('fallback_jwt_token_' + Date.now(), fallbackUser);
-      setActivePage('dashboard');
+      setError(err.message || 'Failed to create account. Please try a different email.');
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleDemoLogin = () => {
-    const demoUser = {
-      id: 1,
-      name: 'Demo Candidate',
-      email: 'demo@interviewmate.com',
-      preferred_job_role: 'Java Developer'
-    };
-    login('demo_token_123', demoUser);
-    setActivePage('dashboard');
   };
 
   return (
@@ -77,8 +50,8 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ setActivePage }) => 
               <Brain className="w-6 h-6 text-indigo-400" />
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">Create Account</h2>
-          <p className="text-xs text-slate-400">Join InterviewMate and start mastering your interviews</p>
+          <h2 className="text-2xl font-bold text-white tracking-tight">Create Account (MySQL Backend)</h2>
+          <p className="text-xs text-slate-400">Register with the backend database & JWT authentication</p>
         </div>
 
         {error && (
@@ -158,22 +131,9 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ setActivePage }) => 
             disabled={loading}
             className="w-full flex items-center justify-center gap-2 py-3.5 text-sm font-semibold text-white bg-gradient-to-r from-violet-600 to-indigo-600 rounded-xl hover:from-violet-500 hover:to-indigo-500 shadow-lg shadow-indigo-500/25 transition-all disabled:opacity-50 mt-2"
           >
-            {loading ? 'Creating Account...' : 'Create Account'} <ArrowRight className="w-4 h-4" />
+            {loading ? 'Creating Account in Backend...' : 'Create Account'} <ArrowRight className="w-4 h-4" />
           </button>
         </form>
-
-        <div className="relative flex py-2 items-center">
-          <div className="flex-grow border-t border-slate-800"></div>
-          <span className="flex-shrink mx-4 text-slate-500 text-xs">or</span>
-          <div className="flex-grow border-t border-slate-800"></div>
-        </div>
-
-        <button 
-          onClick={handleDemoLogin}
-          className="w-full flex items-center justify-center gap-2 py-3 text-xs font-semibold text-indigo-300 bg-indigo-600/10 border border-indigo-500/30 rounded-xl hover:bg-indigo-600/20 transition-all"
-        >
-          <Sparkles className="w-4 h-4 text-indigo-400" /> Quick Demo Login (Instant Access)
-        </button>
 
         <div className="text-center text-xs text-slate-400">
           Already have an account?{' '}
